@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRA Atlas - AI-Powered Forest Rights Monitoring</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary: #2E7D32;
+            --primary-dark: #1B5E20;
+            --secondary: #FF9800;
+            --white: #ffffff;
+            --light: #f5f5f5;
+            --dark: #333;
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #f5f5f5;
+            --card-bg: #1e1e1e;
+            --shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: relative;
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--white);
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 150px;
+            z-index: 1001;
+        }
+
+        .lang-dropdown.show {
+            display: flex;
+        }
+
+        .lang-option {
+            background: none;
+            border: none;
+            padding: 8px 10px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: var(--transition);
+            color: var(--dark);
+        }
+
+        .lang-option:hover {
+            background: var(--light);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--white);
+            padding: 0 20px;
+            margin-top: 60px;
+        }
+
+        .hero-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.3s both;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--white);
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            animation: fadeInUp 1s ease 0.6s both;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            background: #e68900;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--secondary);
+        }
+
+        /* Section Common Styles */
+        .section {
+            padding: 5rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--primary-dark);
+            font-size: 2.5rem;
+        }
+
+        .dark-mode .section-title {
+            color: var(--secondary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Dashboard Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.8rem;
+        }
+
+        .chart-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .chart-btn.active {
+            background: var(--secondary);
+        }
+
+        /* Interactive Map Section */
+        .map-container {
+            height: 600px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        #fra-map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .map-controls button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .map-controls button:hover {
+            background: var(--primary-dark);
+        }
+
+        .report-form {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        /* AI Assistant Section */
+        .ai-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+        }
+
+        .ai-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .ai-chatbox {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chat-header {
+            background: var(--primary-dark);
+            color: var(--white);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .chat-messages {
+            height: 300px;
+            padding: 1rem;
+            overflow-y: auto;
+            background: var(--bg-color);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background: var(--primary);
+            color: var(--white);
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid #ddd;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .chat-input button {
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+
+        /* Floating AI Button */
+        .ai-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .ai-float:hover {
+            transform: scale(1.1);
+        }
+
+        /* States Section */
+        .states-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .state-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .state-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .state-header {
+            background: var(--primary);
+            color: var(--white);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .state-content {
+            padding: 1.5rem;
+        }
+
+        .state-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        /* About & Team Section */
+        .about-content {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .about-section {
+            margin-bottom: 2rem;
+        }
+
+        .about-section h3 {
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .dark-mode .about-section h3 {
+            color: var(--secondary);
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tech-item {
+            background: var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .team-member {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+
+        .member-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        /* Contact Section */
+        .contact-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+
+        .contact-form {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .contact-info {
+            background: var(--primary);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-item i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-dark);
+            color: var(--white);
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--white);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            color: var(--white);
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease both;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .hero-content h2 {
+                font-size: 2rem;
+            }
+
+            .ai-container {
+                grid-template-columns: 1fr;
+            }
+
+            nav ul {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-controls {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-tree"></i>
+                <h1>FRA Atlas</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#map">Map & Reports</a></li>
+                    <li><a href="#ai">AI Assistant</a></li>
+                    <li><a href="#states">States</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="header-controls">
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button class="lang-btn">
+                        <i class="fas fa-globe"></i> English
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option" data-lang="en">English</button>
+                        <button class="lang-option" data-lang="hi">Hindi</button>
+                        <button class="lang-option" data-lang="te">Telugu</button>
+                        <button class="lang-option" data-lang="ta">Tamil</button>
+                        <button class="lang-option" data-lang="bn">Bengali</button>
+                        <button class="lang-option" data-lang="or">Odia</button>
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h2>AI-Powered FRA Atlas & WebGIS-Based Decision Support System</h2>
+            <p>Real-time monitoring of Forest Rights Act (FRA) implementation across key states</p>
+            <div>
+                <a href="#dashboard" class="btn">Explore Dashboard</a>
+                <a href="#map" class="btn btn-outline">Report an Issue on Map</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="section">
+        <div class="container">
+            <h2 class="section-title">FRA Implementation Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card fade-in">
+                    <div class="stat-number">42,587</div>
+                    <div class="stat-label">Total Claims Processed</div>
+                    <i class="fas fa-file-alt" style="color: var(--primary); font-size: 2rem; margin-top: 1rem;"></i>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-number">78%</div>
+                    <div class="stat-label">Average Approval Rate</div>
+                    <i class="fas fa-chart-line" style="color: var(--primary); font-size: 2rem; margin-top: 1rem;"></i>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-number">215K</div>
+                    <div class="stat-label">Individuals Benefited</div>
+                    <i class="fas fa-users" style="color: var(--primary); font-size: 2rem; margin-top: 1rem;"></i>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-number">382K</div>
+                    <div class="stat-label">Hectares Recognized</div>
+                    <i class="fas fa-map" style="color: var(--primary); font-size: 2rem; margin-top: 1rem;"></i>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Claim Categories</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-chart="pie">Pie Chart</button>
+                            <button class="chart-btn" data-chart="bar">Bar Chart</button>
+                        </div>
+                    </div>
+                    <div id="claim-categories-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Year-wise Approvals</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-chart="line">Line Chart</button>
+                            <button class="chart-btn" data-chart="area">Area Chart</button>
+                        </div>
+                    </div>
+                    <div id="yearly-approvals-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>State Comparison</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-chart="bar">Bar Chart</button>
+                            <button class="chart-btn" data-chart="radar">Radar Chart</button>
+                        </div>
+                    </div>
+                    <div id="state-comparison-chart"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Map Section -->
+    <section id="map" class="section">
+        <div class="container">
+            <h2 class="section-title">Interactive FRA Map</h2>
+            <div class="map-container">
+                <div id="fra-map"></div>
+                <div class="map-controls">
+                    <button id="satellite-btn">Satellite</button>
+                    <button id="terrain-btn">Terrain</button>
+                    <button id="reset-btn">Reset View</button>
+                </div>
+            </div>
+
+            <div class="report-form">
+                <h3>Report FRA Issue</h3>
+                <form id="issue-form">
+                    <div class="form-group">
+                        <label for="issue-name">Your Name</label>
+                        <input type="text" id="issue-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="issue-location">Location Details</label>
+                        <input type="text" id="issue-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="issue-type">Issue Type</label>
+                        <select id="issue-type" required>
+                            <option value="">Select Issue Type</option>
+                            <option value="delay">Delay in Processing</option>
+                            <option value="dispute">Land Dispute</option>
+                            <option value="missing">Missing Record</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="issue-description">Description</label>
+                        <textarea id="issue-description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="issue-photo">Upload Photo (Optional)</label>
+                        <input type="file" id="issue-photo" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn">Submit Report</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Assistant Section -->
+    <section id="ai" class="section ai-section">
+        <div class="container">
+            <h2 class="section-title">AI Assistant</h2>
+            <div class="ai-container">
+                <div class="ai-content">
+                    <h2>Get Instant Answers About FRA Implementation</h2>
+                    <p>Our AI-powered assistant can help you with questions about FRA claims, processes, and state-wise data in multiple languages.</p>
+                    <ul style="list-style: none; margin-top: 1rem;">
+                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--secondary);"></i> FRA claim status and process</li>
+                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--secondary);"></i> Documentation requirements</li>
+                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--secondary);"></i> State-wise implementation data</li>
+                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--secondary);"></i> Policy guidelines and updates</li>
+                    </ul>
+                </div>
+                <div class="ai-chatbox">
+                    <div class="chat-header">
+                        <h3>FRA AI Assistant</h3>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            Hello! I'm your FRA Assistant. How can I help you with Forest Rights Act information today?
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="userInput" placeholder="Type your question...">
+                        <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating AI Button -->
+    <div class="ai-float" id="aiFloat">
+        <i class="fas fa-robot"></i>
+    </div>
+
+    <!-- States Section -->
+    <section id="states" class="section">
+        <div class="container">
+            <h2 class="section-title">State-Wise FRA Implementation</h2>
+            <div class="states-grid">
+                <div class="state-card fade-in">
+                    <div class="state-header">
+                        <h3>Madhya Pradesh</h3>
+                    </div>
+                    <div class="state-content">
+                        <p>Leading state in FRA implementation with high claim approval rates</p>
+                        <div class="state-stats">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">18,452</div>
+                                <div style="font-size: 0.8rem;">Claims</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">82%</div>
+                                <div style="font-size: 0.8rem;">Approved</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="margin-top: 1rem; width: 100%;">View on Map</button>
+                    </div>
+                </div>
+                <div class="state-card fade-in">
+                    <div class="state-header">
+                        <h3>Tripura</h3>
+                    </div>
+                    <div class="state-content">
+                        <p>Strong community rights recognition with tribal-focused implementation</p>
+                        <div class="state-stats">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">9,327</div>
+                                <div style="font-size: 0.8rem;">Claims</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">76%</div>
+                                <div style="font-size: 0.8rem;">Approved</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="margin-top: 1rem; width: 100%;">View on Map</button>
+                    </div>
+                </div>
+                <div class="state-card fade-in">
+                    <div class="state-header">
+                        <h3>Odisha</h3>
+                    </div>
+                    <div class="state-content">
+                        <p>Significant progress in individual and community forest rights</p>
+                        <div class="state-stats">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">12,658</div>
+                                <div style="font-size: 0.8rem;">Claims</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">71%</div>
+                                <div style="font-size: 0.8rem;">Approved</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="margin-top: 1rem; width: 100%;">View on Map</button>
+                    </div>
+                </div>
+                <div class="state-card fade-in">
+                    <div class="state-header">
+                        <h3>Telangana</h3>
+                    </div>
+                    <div class="state-content">
+                        <p>Focused implementation in scheduled areas with digital initiatives</p>
+                        <div class="state-stats">
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">7,150</div>
+                                <div style="font-size: 0.8rem;">Claims</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">68%</div>
+                                <div style="font-size: 0.8rem;">Approved</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="margin-top: 1rem; width: 100%;">View on Map</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About & Team Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <h2 class="section-title">About FRA Atlas & Our Team</h2>
+            
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>Problem Statement</h3>
+                    <p>Development of AI-powered FRA Atlas and WebGIS-based Decision Support System (DSS) for Integrated Monitoring of Forest Rights Act (FRA) Implementation across Madhya Pradesh, Tripura, Odisha, and Telangana.</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Our Approach</h3>
+                    <p>We combine AI analytics with interactive WebGIS mapping to provide real-time monitoring, transparent claim tracking, and data-driven insights for FRA implementation. Our system enables stakeholders to visualize FRA progress, identify bottlenecks, and make informed decisions.</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Forest Rights Act (FRA) 2006</h3>
+                    <p>The Forest Rights Act (FRA) was enacted in 2006 to recognize and vest forest rights in Scheduled Tribes and Other Traditional Forest Dwellers who have been residing in forests for generations. The act aims to correct historical injustices faced by forest-dwelling communities while ensuring conservation of forests.</p>
+                    <p>Key provisions include recognition of individual forest rights, community forest rights, and habitat rights for Particularly Vulnerable Tribal Groups (PVTGs).</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>VanMitra Integration</h3>
+                    <p>VanMitra is our proof-of-concept platform that demonstrates the integration of AI and GIS technologies for forest governance. It serves as the foundation for FRA Atlas, providing:</p>
+                    <ul style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Real-time forest monitoring capabilities</li>
+                        <li>Community engagement tools</li>
+                        <li>Data collection and validation mechanisms</li>
+                        <li>Multi-stakeholder collaboration features</li>
+                    </ul>
+                    <p>VanMitra's success in pilot regions has informed the development of FRA Atlas, ensuring practical applicability and user-centered design.</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Technology Stack</h3>
+                    <div class="tech-stack">
+                        <span class="tech-item"><i class="fas fa-map"></i> Leaflet.js</span>
+                        <span class="tech-item"><i class="fas fa-database"></i> PostGIS</span>
+                        <span class="tech-item"><i class="fas fa-server"></i> GeoServer</span>
+                        <span class="tech-item"><i class="fas fa-chart-bar"></i> Plot
